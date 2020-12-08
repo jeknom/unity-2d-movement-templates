@@ -1,6 +1,6 @@
 # Unity 2D movement templates
 
-I use this repo to create custom 2D template movement scripts in Unity.
+Repo for my Unity 2D movement templates.
 
 ## Usage - Platformer Movement
 

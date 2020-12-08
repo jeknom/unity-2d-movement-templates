@@ -71,7 +71,7 @@ namespace MovementTemplates.Scripts
                 this.horizontalMoveSlowMaxSpeed :
                 this.horizontalMaxSpeed;
 
-            if (this.currentDirectionalInput == this.moveLeftKey && result < -maxSpeedToUse)
+            if (this.currentDirectionalInput == this.moveLeftKey && result > -maxSpeedToUse)
             {
                 result -= this.horizontalAcceleration * Time.deltaTime;
             }
@@ -92,6 +92,7 @@ namespace MovementTemplates.Scripts
                 result *= this.slide;
             }
 
+            Debug.Log("Result: " + result);
             this.rb2d.velocity = Vector2.SmoothDamp(
                 current: velocity,
                 target: new Vector2(result, velocity.y),

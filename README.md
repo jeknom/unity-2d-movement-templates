@@ -1,6 +1,6 @@
 # Unity 2D movement templates
 
-I use this repo to create custom 2D template movement scripts in Unity.
+Repo for my Unity 2D movement templates.
 
 ## Usage - Platformer Movement
 
@@ -10,3 +10,5 @@ I use this repo to create custom 2D template movement scripts in Unity.
 4. Attach the `PlatformerMovement` script to the Player.
 5. Set the `Ground Layer` in `PlatformerMovement` to "Ground".
 6. Adjust the settings to your liking.
+
+![Platformer example](https://media.giphy.com/media/zyryVzOY7CaI0vVDyS/giphy.gif)

@@ -9,6 +9,6 @@ Repo for my Unity 2D movement templates.
 3. Create and change the `Layer` property of Ground to "Ground".
 4. Attach the `PlatformerMovement` script to the Player.
 5. Set the `Ground Layer` in `PlatformerMovement` to "Ground".
-6. Adjust the settings to your liking.
+6. Adjust the `PlatformerMovement` and `Rigidbody2D` settings to your liking.
 
 ![Platformer example](https://media.giphy.com/media/zyryVzOY7CaI0vVDyS/giphy.gif)

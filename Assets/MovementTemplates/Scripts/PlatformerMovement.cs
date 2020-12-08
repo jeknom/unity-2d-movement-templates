@@ -15,12 +15,12 @@ namespace MovementTemplates.Scripts
         }
 
         [SerializeField] LayerMask groundLayer;
-        [SerializeField, Range(1, 200)] float horizontalAcceleration = 150f;
-        [SerializeField, Range(1, 100)] float horizontalMaxSpeed = 10f;
-        [SerializeField, Range(0, 2f)] float movementSmoothing = 0.01f;
-        [SerializeField, Range(1, 100)] float jumpForce = 400f;
-        [SerializeField, Range(0, 0.99f)] float slide = 0.8f;
-        [SerializeField, Range(0.001f, 10)] float collisionBoxLength = 0.01f;
+        [SerializeField, Range(1, 500)] float horizontalAcceleration = 150f;
+        [SerializeField, Range(1, 500)] float horizontalMaxSpeed = 15f;
+        [SerializeField, Range(1, 100)] float jumpForce = 4.5f;
+        [SerializeField, Range(0, 1f)] float slide = 0.5f;
+        [SerializeField, Range(0, 1f)] float movementSmoothing = 0.01f;
+        [SerializeField, Range(0.1f, 1f)] float collisionBoxLength = 0.1f;
 
         Rigidbody2D rb2d;
         Collider2D collider2d;

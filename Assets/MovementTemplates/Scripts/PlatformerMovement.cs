@@ -6,17 +6,21 @@ namespace MovementTemplates.Scripts
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
     public class PlatformerMovement : MonoBehaviour
     {
-        enum MoveState
-        {
-            None,
-            Left,
-            Right,
-            Jump
-        }
-
+        [Header("Setup")]
         [SerializeField] LayerMask groundLayer;
+        
+        [Header("Keys")]
+        [SerializeField] KeyCode moveLeftKey = KeyCode.A;
+        [SerializeField] KeyCode moveRightKey = KeyCode.D;
+        [SerializeField] KeyCode jumpKey = KeyCode.Space;
+        [SerializeField] KeyCode moveFastKey = KeyCode.LeftShift;
+        [SerializeField] KeyCode moveSlowKey = KeyCode.C;
+        
+        [Header("Modifiers")]
         [SerializeField, Range(1, 500)] float horizontalAcceleration = 150f;
         [SerializeField, Range(1, 500)] float horizontalMaxSpeed = 15f;
+        [SerializeField, Range(1, 500)] float horizontalMoveFastMaxSpeed = 20f;
+        [SerializeField, Range(1, 500)] float horizontalMoveSlowMaxSpeed = 5f;
         [SerializeField, Range(1, 100)] float jumpForce = 4.5f;
         [SerializeField, Range(0, 1f)] float slide = 0.5f;
         [SerializeField, Range(0, 1f)] float movementSmoothing = 0.01f;
@@ -24,8 +28,10 @@ namespace MovementTemplates.Scripts
 
         Rigidbody2D rb2d;
         Collider2D collider2d;
-        MoveState currentMoveState = MoveState.None;
+        KeyCode currentDirectionalInput = KeyCode.None;
         Vector2 currentVelocity = Vector2.zero;
+        bool isMovingFast;
+        bool isMovingSlow;
 
         void Start()
         {
@@ -41,7 +47,9 @@ namespace MovementTemplates.Scripts
     
         void Update()
         {
-            this.currentMoveState = this.GetInput();
+            this.currentDirectionalInput = this.GetDirectionalInput();
+            this.isMovingFast = Input.GetKey(this.moveFastKey);
+            this.isMovingSlow = Input.GetKey(this.moveSlowKey);
         }
 
         void FixedUpdate()
@@ -53,30 +61,35 @@ namespace MovementTemplates.Scripts
         void HandleHorizontalMovement()
         {
             var velocity = this.rb2d.velocity;
-            var switchedDirection = (this.currentMoveState == MoveState.Left && velocity.x > 0f) ||
-                                    (this.currentMoveState == MoveState.Right && velocity.x < 0f);
+            var switchedDirection = (this.currentDirectionalInput == this.moveLeftKey && velocity.x > 0f) ||
+                                    (this.currentDirectionalInput == this.moveRightKey && velocity.x < 0f);
         
             var result = switchedDirection ? 0f : velocity.x;
+            var maxSpeedToUse = this.isMovingFast ?
+                this.horizontalMoveFastMaxSpeed :
+                this.isMovingSlow ?
+                this.horizontalMoveSlowMaxSpeed :
+                this.horizontalMaxSpeed;
 
-            switch (this.currentMoveState)
+            if (this.currentDirectionalInput == this.moveLeftKey && result < -maxSpeedToUse)
             {
-                case MoveState.Left when result < -this.horizontalMaxSpeed:
-                    result -= this.horizontalAcceleration * Time.deltaTime;
-                    break;
-                case MoveState.Left:
-                    result = -this.horizontalMaxSpeed;
-                    break;
-                case MoveState.Right when result < this.horizontalMaxSpeed:
-                    result += this.horizontalAcceleration * Time.deltaTime;
-                    break;
-                case MoveState.Right:
-                    result = this.horizontalMaxSpeed;
-                    break;
-                case MoveState.Jump:
-                case MoveState.None:
-                default:
-                    result *= this.slide;
-                    break;
+                result -= this.horizontalAcceleration * Time.deltaTime;
+            }
+            else if (this.currentDirectionalInput == this.moveLeftKey)
+            {
+                result = -maxSpeedToUse;
+            }
+            else if (this.currentDirectionalInput == this.moveRightKey && result < maxSpeedToUse)
+            {
+                result += this.horizontalAcceleration * Time.deltaTime;
+            }
+            else if (this.currentDirectionalInput == this.moveRightKey)
+            {
+                result = maxSpeedToUse;
+            }
+            else
+            {
+                result *= this.slide;
             }
 
             this.rb2d.velocity = Vector2.SmoothDamp(
@@ -88,11 +101,11 @@ namespace MovementTemplates.Scripts
 
         void HandleJump()
         {
-            if (this.currentMoveState != MoveState.Jump || !this.IsColliding(Vector2.down)) return;
+            if (this.currentDirectionalInput != this.jumpKey || !this.IsColliding(Vector2.down)) return;
         
             this.rb2d.AddForce(new Vector2(0f, this.jumpForce * this.rb2d.gravityScale), ForceMode2D.Impulse);
         
-            this.currentMoveState = MoveState.None;
+            this.currentDirectionalInput = KeyCode.None;
         }
 
         bool IsColliding(Vector2 direction)
@@ -110,23 +123,23 @@ namespace MovementTemplates.Scripts
             return hit.collider != null;
         }
 
-        MoveState GetInput()
+        KeyCode GetDirectionalInput()
         {
-            if (Input.GetKey(KeyCode.Space) &&
-                this.currentMoveState != MoveState.Jump &&
+            if (Input.GetKey(this.jumpKey) &&
+                this.currentDirectionalInput != this.jumpKey &&
                 this.IsColliding(Vector2.down))
             {
-                return MoveState.Jump;
+                return this.jumpKey;
             }
         
             var horizontalInput = Input.GetAxisRaw("Horizontal");
 
             if (horizontalInput > 0)
             {
-                return MoveState.Right;
+                return this.moveRightKey;
             }
         
-            return horizontalInput < 0 ? MoveState.Left : MoveState.None;
+            return horizontalInput < 0 ? this.moveLeftKey : KeyCode.None;
         }
     }
 }

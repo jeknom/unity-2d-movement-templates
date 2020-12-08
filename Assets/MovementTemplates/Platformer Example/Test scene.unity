@@ -763,8 +763,15 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 256
+  moveLeftKey: 97
+  moveRightKey: 100
+  jumpKey: 32
+  moveFastKey: 304
+  moveSlowKey: 99
   horizontalAcceleration: 150
   horizontalMaxSpeed: 15
+  horizontalMoveFastMaxSpeed: 20
+  horizontalMoveSlowMaxSpeed: 5
   jumpForce: 4.5
   slide: 0.5
   movementSmoothing: 0.01

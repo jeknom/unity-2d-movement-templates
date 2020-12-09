@@ -28,8 +28,10 @@ namespace MovementTemplates.Scripts
 
         Rigidbody2D rb2d;
         Collider2D collider2d;
-        KeyCode currentDirectionalInput = KeyCode.None;
+        KeyCode currentInput = KeyCode.None;
         Vector2 currentVelocity = Vector2.zero;
+        // Need this flag as FixedUpdate() might not pick up on quick tap of the jump key.
+        bool wasJumpPressed;
         bool isMovingFast;
         bool isMovingSlow;
 
@@ -47,9 +49,7 @@ namespace MovementTemplates.Scripts
     
         void Update()
         {
-            this.currentDirectionalInput = this.GetDirectionalInput();
-            this.isMovingFast = Input.GetKey(this.moveFastKey);
-            this.isMovingSlow = Input.GetKey(this.moveSlowKey);
+            this.GetInput();
         }
 
         void FixedUpdate()
@@ -61,8 +61,8 @@ namespace MovementTemplates.Scripts
         void HandleHorizontalMovement()
         {
             var velocity = this.rb2d.velocity;
-            var switchedDirection = (this.currentDirectionalInput == this.moveLeftKey && velocity.x > 0f) ||
-                                    (this.currentDirectionalInput == this.moveRightKey && velocity.x < 0f);
+            var switchedDirection = (this.currentInput == this.moveLeftKey && velocity.x > 0f) ||
+                                    (this.currentInput == this.moveRightKey && velocity.x < 0f);
         
             var result = switchedDirection ? 0f : velocity.x;
             var maxSpeedToUse = this.isMovingFast ?
@@ -71,19 +71,19 @@ namespace MovementTemplates.Scripts
                 this.horizontalMoveSlowMaxSpeed :
                 this.horizontalMaxSpeed;
 
-            if (this.currentDirectionalInput == this.moveLeftKey && result > -maxSpeedToUse)
+            if (this.currentInput == this.moveLeftKey && result > -maxSpeedToUse)
             {
                 result -= this.horizontalAcceleration * Time.deltaTime;
             }
-            else if (this.currentDirectionalInput == this.moveLeftKey)
+            else if (this.currentInput == this.moveLeftKey)
             {
                 result = -maxSpeedToUse;
             }
-            else if (this.currentDirectionalInput == this.moveRightKey && result < maxSpeedToUse)
+            else if (this.currentInput == this.moveRightKey && result < maxSpeedToUse)
             {
                 result += this.horizontalAcceleration * Time.deltaTime;
             }
-            else if (this.currentDirectionalInput == this.moveRightKey)
+            else if (this.currentInput == this.moveRightKey)
             {
                 result = maxSpeedToUse;
             }
@@ -101,11 +101,14 @@ namespace MovementTemplates.Scripts
 
         void HandleJump()
         {
-            if (this.currentDirectionalInput != this.jumpKey || !this.IsColliding(Vector2.down)) return;
-        
-            this.rb2d.AddForce(new Vector2(0f, this.jumpForce * this.rb2d.gravityScale), ForceMode2D.Impulse);
-        
-            this.currentDirectionalInput = KeyCode.None;
+            if (!this.wasJumpPressed) return;
+
+            this.wasJumpPressed = false;
+
+            if (this.IsColliding(Vector2.down))
+            {
+                this.rb2d.AddForce(new Vector2(0f, this.jumpForce * this.rb2d.gravityScale), ForceMode2D.Impulse);
+            }
         }
 
         bool IsColliding(Vector2 direction)
@@ -123,23 +126,24 @@ namespace MovementTemplates.Scripts
             return hit.collider != null;
         }
 
-        KeyCode GetDirectionalInput()
+        void GetInput()
         {
-            if (Input.GetKey(this.jumpKey) &&
-                this.currentDirectionalInput != this.jumpKey &&
-                this.IsColliding(Vector2.down))
+            this.isMovingFast = Input.GetKey(this.moveFastKey);
+            this.isMovingSlow = Input.GetKey(this.moveSlowKey);
+            this.wasJumpPressed = Input.GetKey(this.jumpKey);
+            
+            if (Input.GetKey(this.moveRightKey))
             {
-                return this.jumpKey;
+                this.currentInput = this.moveRightKey;
             }
-        
-            var horizontalInput = Input.GetAxisRaw("Horizontal");
-
-            if (horizontalInput > 0)
+            else if (Input.GetKey(this.moveLeftKey))
             {
-                return this.moveRightKey;
+                this.currentInput = this.moveLeftKey;
             }
-        
-            return horizontalInput < 0 ? this.moveLeftKey : KeyCode.None;
+            else
+            {
+                this.currentInput = KeyCode.None;
+            }
         }
     }
 }

@@ -25,6 +25,7 @@ namespace MovementTemplates.Scripts
         [SerializeField, Range(0, 1f)] float slide = 0.5f;
         [SerializeField, Range(0, 1f)] float movementSmoothing = 0.01f;
         [SerializeField, Range(0.1f, 1f)] float collisionBoxLength = 0.1f;
+        [SerializeField, Range(0.01f, 1f)] float collisionBoxSize = 0.90f;
 
         Rigidbody2D rb2d;
         Collider2D collider2d;
@@ -116,8 +117,7 @@ namespace MovementTemplates.Scripts
             var playerBounds = this.collider2d.bounds;
             var hit = Physics2D.BoxCast(
                 origin: playerBounds.center,
-                // Don't want to include the corners so only getting 90% of the box.
-                size: playerBounds.size * 0.90f,
+                size: playerBounds.size * this.collisionBoxSize,
                 angle: 0f,
                 direction: direction,
                 distance: this.collisionBoxLength,

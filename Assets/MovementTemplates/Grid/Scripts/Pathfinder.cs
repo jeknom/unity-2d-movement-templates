@@ -80,10 +80,17 @@ public class Pathfinder : MonoBehaviour
                     continue;
                 }
 
+                if (openSteps.Any(step => step.position == successor.position))
+                {
+                    continue;
+                }
+
                 openSteps.Add(successor);
             }
 
             closedSteps.Add(minCostNode);
+
+            Debug.Log("I have gone through " + closedSteps.Count + " nodes!");
 
             if (minCostNode.position == target)
             {

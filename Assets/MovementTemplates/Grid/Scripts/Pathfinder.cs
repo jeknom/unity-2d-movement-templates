@@ -1,139 +1,127 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class Pathfinder : MonoBehaviour
+namespace Pathfinder
 {
-    [Serializable]
-    public class Node
+    [RequireComponent(typeof(Rigidbody2D))]
+    public class Pathfinder : MonoBehaviour
     {
-        public int movementCost;
-        public int estimatedMovementCost;
-        public int cost;
-        public Vector3 position;
-        public Node parent;
-    }
-    [SerializeField] LayerMask blockingLayer;
-    [SerializeField] float movementSpeed = 0.1f;
-    [SerializeField] Vector3 testTarget;
-    Stack<Vector3> currentRoute = new Stack<Vector3>();
-    Vector3 currentStep = Vector3.zero;
+        public Transform target;
 
-    protected void Start()
-    {
-        this.currentStep = this.transform.position;
-        this.MoveTo(this.testTarget);
-    }
+        [SerializeField] LayerMask blockingLayer;
+        [SerializeField] float movementSpeed = 0.1f;
+        [SerializeField] int maxNodeSearchCount = 5000;
 
-    void FixedUpdate()
-    {
-        if (this.currentStep == this.transform.position && this.currentRoute.Count > 0)
+        Stack<Vector2> currentRoute = new Stack<Vector2>();
+        Vector2 currentStep = Vector2.zero;
+        Rigidbody2D rb2d;
+
+        bool isMovingTowardTarget = false;
+
+        public Stack<Vector2> GetPath(Transform target)
         {
-            this.currentStep = this.currentRoute.Pop();
-        }
+            var targetPosition = (Vector2)target.position;
+            var finishNode = this.GetFinishNode(targetPosition);
+            var path = new Stack<Vector2>();
 
-        if (this.currentStep != this.transform.position)
-        {
-            this.transform.position = Vector3.MoveTowards(this.transform.position, this.currentStep, this.movementSpeed);
-        }
-    }
-
-    protected void MoveTo(Vector3 target)
-    {
-        this.currentRoute = this.GetRoute(target);
-    }
-
-    Stack<Vector3> GetRoute(Vector3 target)
-    {
-        var openSteps = new List<Node>();
-        var closedSteps = new List<Node>();
-
-        openSteps.Add(new Node { position = this.transform.position });
-
-        while (openSteps.Any())
-        {
-            var minCostNode = openSteps.Aggregate((curMin, node) => node.cost < curMin.cost ? node : curMin);
-            openSteps.Remove(minCostNode);
-
-            var successors = new List<Node>
+            if (finishNode != default)
             {
-                this.GetSuccessor(minCostNode, Vector3.left, target),
-                this.GetSuccessor(minCostNode, Vector3.right, target),
-                this.GetSuccessor(minCostNode, Vector3.up, target),
-                this.GetSuccessor(minCostNode, Vector3.down, target)
-            };
-
-            foreach (var successor in successors)
-            {
-                if (closedSteps.Any(step => step.position == successor.position) || this.IsLayerBlocked(successor.position))
-                {
-                    continue;
-                }
-                
-                foreach (var step in openSteps.Where(step => step.position == successor.position &&
-                    successor.cost < step.cost))
-                {
-                    step.parent = minCostNode;
-                    step.cost = successor.cost;
-
-                    continue;
-                }
-
-                if (openSteps.Any(step => step.position == successor.position))
-                {
-                    continue;
-                }
-
-                openSteps.Add(successor);
+                return this.BuildPath(finishNode, path);
             }
 
-            closedSteps.Add(minCostNode);
+            return path;
+        }
 
-            Debug.Log("I have gone through " + closedSteps.Count + " nodes!");
+        Stack<Vector2> BuildPath(Node currentNode, Stack<Vector2> path)
+        {
+            path.Push(currentNode.position);
 
-            if (minCostNode.position == target)
+            if (currentNode.position == this.rb2d.position)
             {
-                break;
+                return path;
+            }
+
+            return this.BuildPath(currentNode.parent, path);
+        }
+
+        protected void Start()
+        {
+            this.rb2d = this.GetComponent<Rigidbody2D>();
+            this.currentStep = this.rb2d.position;
+        }
+
+        void FixedUpdate()
+        {
+            var isEmptyRoute = this.currentRoute.Count == 0;
+            var hasReachedDestination = (Vector2)this.target.position == this.rb2d.position;
+            var hasReachedCurrentStep = this.currentStep == this.rb2d.position;
+
+            if (isEmptyRoute)
+            {
+                this.currentRoute = this.currentRoute = this.GetPath(this.target);
+            }
+
+            if (!isEmptyRoute && hasReachedCurrentStep)
+            {
+                this.currentStep = this.currentRoute.Pop();
+            }
+
+            if (!hasReachedCurrentStep && !hasReachedDestination)
+            {
+                this.rb2d.position = Vector2.MoveTowards(this.rb2d.position, this.currentStep, this.movementSpeed);
             }
         }
 
-        var finalPath = new Stack<Vector3>();
-        var currentStep = closedSteps.FirstOrDefault(step => step.position == target);
-
-        if (currentStep != default)
+        Node GetFinishNode(Vector2 target)
         {
-            while (!finalPath.Contains(this.transform.position))
+            var openNodes = new HashSet<Node>();
+            var closedNodes = new HashSet<Node>();
+
+            openNodes.Add(new Node { position = this.rb2d.position });
+
+            while (openNodes.Any())
             {
-                finalPath.Push(currentStep.position);
-                currentStep = currentStep.parent;
+                var lowestCostNode = openNodes.PopLowestCostNode();
+                if (lowestCostNode.position == target || this.maxNodeSearchCount <= closedNodes.Count)
+                {
+                    return lowestCostNode;
+                }
+
+                var walkableAdjacentNodes = lowestCostNode.GetAdjacentWalkableNodes(this.blockingLayer, target);
+
+                foreach (var walkableNode in walkableAdjacentNodes)
+                {
+                    if (closedNodes.Any(closedNode => closedNode.position == walkableNode.position))
+                    {
+                        continue;
+                    }
+
+                    foreach (var openNode in openNodes)
+                    {
+                        if (openNode.position == walkableNode.position && openNode.cost > walkableNode.cost)
+                        {
+                            openNode.cost = walkableNode.cost;
+                            openNode.parent = walkableNode.parent;
+
+                            continue;
+                        }
+                    }
+
+                    if (openNodes.Any(openNode => openNode.position == walkableNode.position))
+                    {
+                        continue;
+                    }
+
+                    openNodes.Add(walkableNode);
+                }
+
+                closedNodes.Add(lowestCostNode);
             }
+
+            return closedNodes.Aggregate((curMin, node) =>
+                curMin.position.GetManhattanDistance(target) > node.position.GetManhattanDistance(target) ? node : curMin);
         }
-
-        return finalPath;
-    }
-
-    Node GetSuccessor(Node parent, Vector3 direction, Vector3 target)
-    {
-        var successorPosition = parent.position + direction;
-        var successorCostEstimation = (int)(Mathf.Abs(successorPosition.x - target.x) + Mathf.Abs(successorPosition.y - target.y));
-        var successorMovementCost = parent.movementCost + 1;
-        var successor = new Node
-        {
-            movementCost = successorMovementCost,
-            estimatedMovementCost = successorCostEstimation,
-            cost = successorMovementCost + successorCostEstimation,
-            position = successorPosition,
-            parent = parent
-        };
-
-        return successor;
-    }
-
-    bool IsLayerBlocked(Vector3 position)
-    {
-        var rayCast = Physics2D.Raycast(position, Vector2.zero, this.blockingLayer);
-
-        return rayCast;
     }
 }
+

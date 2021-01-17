@@ -95,10 +95,12 @@ namespace Pathfinder
                         continue;
                     }
 
+                    var isAlreadyOpen = false;
                     foreach (var openNode in openNodes)
                     {
                         if (openNode.position == walkableNode.position && openNode.cost > walkableNode.cost)
                         {
+                            isAlreadyOpen = true;
                             openNode.cost = walkableNode.cost;
                             openNode.parent = walkableNode.parent;
 
@@ -106,12 +108,10 @@ namespace Pathfinder
                         }
                     }
 
-                    if (openNodes.Any(openNode => openNode.position == walkableNode.position))
+                    if (!isAlreadyOpen)
                     {
-                        continue;
+                        openNodes.Add(walkableNode);
                     }
-
-                    openNodes.Add(walkableNode);
                 }
 
                 closedNodes.Add(lowestCostNode);

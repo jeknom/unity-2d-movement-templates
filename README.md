@@ -4,7 +4,7 @@ Repo for my Unity 2D movement templates.
 
 ## Platformer
 
-### Usage - Movement
+### Movement
 
 1. Create two new `GameObject`s.
 2. Name the other Ground and the other Player (as an example).
@@ -17,7 +17,7 @@ Repo for my Unity 2D movement templates.
 
 ## Grid
 
-### Usage - Movement
+### Movement
 
 See the example scene in the Grid directory to see how the scripts are set up in detail. Basically, you will need to create your Player
 script and make it implement the Movable script. You can then call `this.SetTargetPosition` with the Vector3 representation of direction
@@ -25,7 +25,7 @@ you would like the player character to move into. Remember to set the Blocking L
 
 ![Grid movement example](https://media.giphy.com/media/YgN5JCouCB19ns9NQd/giphy.gif)
 
-### Usage - Pathfinding
+### Pathfinding
 
 The example scene here is the best way to get acquainted with how things work. However, setting this up should be pretty much as simple as attaching the `Pathfinder` script and then setting the `target` tranform field to some value.
 

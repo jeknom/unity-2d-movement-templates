@@ -7,20 +7,23 @@ namespace Pathfinder
     [RequireComponent(typeof(Rigidbody2D))]
     public class Pathfinder : MonoBehaviour
     {
+        [Header("Targetting")]
         public Transform target;
-
+        [SerializeField] bool isWandering;
+        [SerializeField] List<Transform> wanderingSpots;
         [SerializeField] LayerMask blockingLayer;
-        [SerializeField] float movementSpeed = 0.1f;
+
+        [Header("Other")]
+        [SerializeField, Range(0.001f, 0.3f)] float movementSpeed = 0.1f;
         [SerializeField] int maxNodeSearchCount = 5000;
 
         Stack<Vector2> currentRoute = new Stack<Vector2>();
         Vector2 currentStep = Vector2.zero;
         Rigidbody2D rb2d;
 
-        public Stack<Vector2> GetPath(Transform target)
+        public Stack<Vector2> GetPath(Vector2 target)
         {
-            var targetPosition = (Vector2)target.position;
-            var finishNode = this.GetFinishNode(targetPosition);
+            var finishNode = this.GetFinishNode(target);
             var path = new Stack<Vector2>();
 
             if (finishNode != default)
@@ -43,7 +46,7 @@ namespace Pathfinder
             return this.BuildPath(currentNode.parent, path);
         }
 
-        protected void Start()
+        void Start()
         {
             this.rb2d = this.GetComponent<Rigidbody2D>();
             this.currentStep = this.rb2d.position;
@@ -57,7 +60,11 @@ namespace Pathfinder
 
             if (isEmptyRoute)
             {
-                this.currentRoute = this.currentRoute = this.GetPath(this.target);
+                var target = this.isWandering ?
+                    (Vector2)this.wanderingSpots[Random.Range(0, this.wanderingSpots.Count)].position :
+                    (Vector2)this.target.position;
+
+                this.currentRoute = this.currentRoute = this.GetPath(target);
             }
 
             if (!isEmptyRoute && hasReachedCurrentStep)

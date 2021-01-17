@@ -17,8 +17,6 @@ namespace Pathfinder
         Vector2 currentStep = Vector2.zero;
         Rigidbody2D rb2d;
 
-        bool isMovingTowardTarget = false;
-
         public Stack<Vector2> GetPath(Transform target)
         {
             var targetPosition = (Vector2)target.position;
